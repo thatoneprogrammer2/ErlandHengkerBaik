@@ -1,6 +1,9 @@
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
+local texturesOff = true
+local materialsPlastic = true
+ -- default ON (Plastic)
 
 local player = Players.LocalPlayer
 local gui = Instance.new("ScreenGui")
@@ -58,16 +61,32 @@ local function createToggle(name, callback)
     end)
 end
 
+local function updateTexture(d)
+    if d:IsA("Decal") or d:IsA("Texture") then
+        d.Transparency = texturesOff and 1 or 0
+    end
+end
+
+local function updateMaterial(d)
+    if d:IsA("BasePart") then
+        d.Material = materialsPlastic and Enum.Material.Plastic or Enum.Material.SmoothPlastic
+    end
+end
+
+
 -- Daftar fitur FPS Boost
 createToggle("Shadows", function(state) Lighting.GlobalShadows = state end)
 createToggle("Water", function(state) workspace:FindFirstChildOfClass("Terrain").WaterWaveSize = state and 0.1 or 0 end)
-createToggle("Textures", function(state) 
-    for _, d in pairs(workspace:GetDescendants()) do 
-        if d:IsA("Decal") or d:IsA("Texture") then 
-            d.Transparency = state and 0 or 1 
-        end 
-    end 
+createToggle("Textures", function(state)
+    texturesOff = not state
+    for _, d in pairs(workspace:GetDescendants()) do
+        if d:IsA("Decal") or d:IsA("Texture") then
+            d.Transparency = texturesOff and 1 or 0
+        end
+    end
 end)
+
+
 createToggle("Particles", function(state) 
     for _, d in pairs(workspace:GetDescendants()) do 
         if d:IsA("ParticleEmitter") then 
@@ -84,13 +103,15 @@ createToggle("PostEffects", function(state)
     end 
 end)
 createToggle("Lighting Mode", function(state) Lighting.EnvironmentDiffuseScale = state and 1 or 0 end)
-createToggle("Materials", function(state) 
-    for _, d in pairs(workspace:GetDescendants()) do 
-        if d:IsA("BasePart") then 
-            d.Material = state and Enum.Material.Plastic or Enum.Material.SmoothPlastic 
-        end 
-    end 
+createToggle("Materials", function(state)
+    materialsPlastic = state
+    for _, d in pairs(workspace:GetDescendants()) do
+        if d:IsA("BasePart") then
+            d.Material = materialsPlastic and Enum.Material.Plastic or Enum.Material.SmoothPlastic
+        end
+    end
 end)
+
 
 -- Label nama di bawah panel
 local title = Instance.new("TextLabel")
@@ -100,7 +121,7 @@ title.AnchorPoint = Vector2.new(0.5, 0)
 title.BackgroundTransparency = 1
 title.Text = "FPS Boost Panel V1 - By Erland Hengker Baik🥴"
 title.TextColor3 = Color3.fromRGB(0, 255, 255)
-title.TextSize = 11,5 -- supaya sama seperti toggle
+title.TextSize = 11.5 -- supaya sama seperti toggle
 title.TextScaled = false
 title.Font = Enum.Font.GothamBold
 title.Parent = frame
@@ -117,3 +138,19 @@ padding.PaddingBottom = UDim.new(0, 12)
 padding.PaddingLeft = UDim.new(0, 8)
 padding.PaddingRight = UDim.new(0, 8)
 padding.Parent = frame
+
+-- Menerapkan ke semua objek yang sudah ada
+for _, d in pairs(workspace:GetDescendants()) do
+    updateTexture(d)
+end
+
+-- Mendeteksi objek baru
+workspace.DescendantAdded:Connect(updateTexture)
+
+-- Terapkan ke semua BasePart yang sudah ada
+for _, d in pairs(workspace:GetDescendants()) do
+    updateMaterial(d)
+end
+
+-- Deteksi BasePart baru
+workspace.DescendantAdded:Connect(updateMaterial)
